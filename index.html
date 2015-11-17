@@ -1,0 +1,200 @@
+<!DOCTYPE html> 
+<html>
+  <head>
+    <!-- title here -->
+    <title>Why Don't We Flip For It</title>
+
+    <!-- meta tags here -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=300">
+    <meta name="apple-mobile-web-app-title" content="Flip For It">
+    <link rel="apple-touch-icon" sizes="144x144" href="touch-icon-ipad-retina.png" />
+    <link rel="apple-touch-icon" sizes="114x114" href="touch-icon-iphone-retina.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="touch-icon-ipad.png" />
+    <link rel="apple-touch-icon" href="touch-icon-iphone.png" />
+
+    <!-- stylesheets here -->
+    <style type="text/css">
+      @font-face {
+        font-family: 'Mouse Memoirs';
+        font-style: normal;
+        font-weight: 400;
+        src: local('Mouse Memoirs'), local('MouseMemoirs-Regular'), url('fonts/MouseMemoirs-Regular.ttf') format('truetype');
+      }
+      div#container {
+        margin-left: auto;
+        margin-right: auto;
+        width: 300px;
+        text-align: center;
+        font-family: 'Mouse Memoirs', sans-serif;
+      }
+      div#side_shown {
+        border-radius: 50%;
+        background-color: #8C8C8C;
+        width: 240px;
+        height: 240px;
+        cursor: hand;
+        cursor: pointer;  
+      }
+      .faded{
+        opacity: 0.2; 
+        filter: alpha(opacity=20);
+      }
+      div#message, div#winner {
+        font-size: 1.5em;
+      }
+      div#side_shown span#overlay{
+        font-size: 12em;
+        color: #F0F0F0;
+        text-shadow: 5px 5px #404040;
+        margin: auto;        
+      }
+      div#coin_container {
+        width: 240px;
+        height: 240px;
+        margin-top: 1em;
+        margin-right: auto; 
+        margin-bottom: 1em;
+        margin-left: auto;
+      }
+      .hidden{
+        display: none;
+      }
+    </style>
+  </head>
+  
+  <body>  
+    <!-- content here -->
+    <div id="container">
+      <div>
+        <h2>Why Don't We Flip For It?</h2>
+      </div>
+      
+      <div id="message">
+        Call it: heads or tails...
+      </div>
+      
+      <div id="coin_container">
+        <div id="side_shown" class="faded">
+          <span id="overlay">?</span>
+        </div>
+        <div id="heads" class="hidden">          
+        </div>
+        <div id="tails" class="hidden">
+        </div>
+      </div>
+      
+      <div id="winner">
+        ...click the coin to flip!
+      </div>
+      
+      <div id="install_me" class="hidden">
+        <h3>On an iPhone?</h3>
+        <h3>You can add this app to your home screen.</h3>
+      </div>
+    </div>
+    
+    <!-- scripts here -->
+    <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript">      
+      
+      function getRandomFromRange (min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      var audioElement = document.createElement('audio');
+
+      var coin = {
+        "name": "quarter",
+        "sound": {
+          "mp3": "sounds/coin-drop.mp3",
+          "ogg": "sounds/coin-drop.ogg"
+        },
+        "heads": {
+          "name": "heads",
+          "url": "images/United_States_quarter_2004.jpg"
+        },
+        "tails": {
+          "name": "tails",
+          "url": "images/2006_NE_Proof.png"
+        }
+      };
+
+      function flipCoin(front, back) {
+        var coin = [];
+        if (front === undefined && back === undefined){
+          coin = ["heads","tails"];
+        } else {
+          coin = [front, back];
+        }
+        var side_up = getRandomFromRange(0,1);
+        return coin[side_up];
+      }
+
+      function setUpSide(sideObject){
+        var coinImage = "<img src='" + sideObject["url"] + 
+                        "' alt='" + sideObject["name"] + 
+                        "' width='240px' height='240px'>";
+        var domString = "div#" + sideObject["name"];
+        var domSide = $(domString);
+        domSide.html(coinImage);
+      }
+
+      function setupDomCoin(coinObject){
+        setUpSide(coinObject["heads"]);
+        setUpSide(coinObject["tails"]);
+        $('div#side_shown').css('background-image', 'url(' + coinObject["heads"]["url"] +')');
+      }
+      
+      function showWinner(sideString){
+        var domString = "div#" + sideString + " img";
+        var coinImage = $(domString).clone();
+        $('div#side_shown').html(coinImage);
+        var winningMessage = "You got " + sideString + "!"
+        $('div#winner').html(winningMessage);
+      }
+
+      function tossDomCoin(){
+        var domShown = $('div#side_shown')
+        domShown.html('').removeClass('faded');
+        domShown.css('background-image', 'url()');
+      }
+
+      function displayTryAgainMessage(){
+        window.setTimeout(function(){
+          $('div#winner').html("Click coin to flip again");
+        }, 1000);
+      }
+
+      function flipCoinAndShowSide(){
+        var winningSideString = flipCoin();
+        tossDomCoin();
+        window.setTimeout(function(){
+          audioElement.play();
+          showWinner(winningSideString);
+          displayTryAgainMessage();
+        }, 40);
+      }
+      
+      $(function(){
+        isStandAlone = window.navigator.standalone;        
+        isUIWebView = /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(navigator.userAgent);
+        showAddHomeScreenMessage = (!isStandAlone && !isUIWebView);
+        if ( showAddHomeScreenMessage ){
+          $('div#install_me').removeClass('hidden');
+          setTimeout(function(){window.scrollTo(0, 1);}, 1);
+        };
+        
+        setupDomCoin(coin);
+
+        var soundFilePath = audioElement.canPlayType("audio/mp3") ? "mp3" : "ogg";
+        audioElement.setAttribute('src', coin["sound"][soundFilePath]);
+        
+        $('div#coin_container').click(function(event){
+          event.preventDefault();
+          flipCoinAndShowSide();
+        });
+      });
+    </script>
+  </body> 
+</html>
